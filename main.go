@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"net/http"
@@ -17,8 +19,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func getIPAddress() (ipAddress string, err error) {
-	log.Info("Fetching external public IP")
+func getIPAddress() (address string, err error) {
+	log.Debug("Fetching external public IP")
 	resp, err := http.Get("https://1.1.1.1/cdn-cgi/trace")
 	if err != nil {
 		return "", err
@@ -28,7 +30,7 @@ func getIPAddress() (ipAddress string, err error) {
 
 	for scanner.Scan() {
 		if strings.HasPrefix(scanner.Text(), "ip=") {
-			ipAddress = strings.TrimPrefix(scanner.Text(), "ip=")
+			address = strings.TrimPrefix(scanner.Text(), "ip=")
 		}
 	}
 
@@ -36,11 +38,11 @@ func getIPAddress() (ipAddress string, err error) {
 		return "", err
 	}
 
-	return ipAddress, nil
+	return address, nil
 }
 
 func fetchRecord() (types.Record, error) {
-	var recordsResponse types.ListRecordsResponse
+	var apiResponse types.ListRecordsResponse
 	client := http.Client{}
 	url := fmt.Sprintf("https://api.cloudflare.com/client/v4/zones/%s/dns_records?type=A&name=%s", os.Getenv("ZONE_ID"), os.Getenv("RECORD_NAME"))
 	req, err := http.NewRequest("GET", url, nil)
@@ -53,21 +55,45 @@ func fetchRecord() (types.Record, error) {
 	if err != nil {
 		return types.Record{}, err
 	}
-	err = json.NewDecoder(res.Body).Decode(&recordsResponse)
+	err = json.NewDecoder(res.Body).Decode(&apiResponse)
 	if err != nil {
 		return types.Record{}, err
 	}
 
-	if len(recordsResponse.Result) > 1 {
+	if len(apiResponse.Result) > 1 {
 		log.Warn("More than one matching Record returned, ambiguous. Choosing first record.")
-		// maybe better to update all?
 	}
 
-	return recordsResponse.Result[0], nil
+	return apiResponse.Result[0], nil
 }
 
-func updateRecord(ipAddress string) error {
-	log.Debugf("Updating with %s", ipAddress)
+func updateRecord(record types.Record, externalAddress string) error {
+	log.Debug("Updating record")
+	var apiResponse types.UpdateRecordResponse
+	client := http.Client{}
+	url := fmt.Sprintf("https://api.cloudflare.com/client/v4/zones/%s/dns_records/%s", os.Getenv("ZONE_ID"), record.ID)
+	ttl, _ := strconv.Atoi(os.Getenv("RECORD_TTL"))
+	reqBody, _ := json.Marshal(types.UpdateRecordRequest{Type: "A", Name: "gordon-pn.com", Content: record.Content, TTL: ttl, Proxied: true})
+	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(reqBody))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("API_TOKEN")))
+	req.Header.Set("Content-Type", "application/json")
+	// TODO: common headers are set
+	res, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	err = json.NewDecoder(res.Body).Decode(&apiResponse)
+	if err != nil {
+		return err
+	}
+	if !apiResponse.Success {
+		return errors.New("record update was not successful")
+	}
+	log.WithFields(log.Fields{"Update success": apiResponse.Success}).Debug("Update API response")
+	log.Debug("Done updating record")
 	return nil
 }
 
@@ -98,21 +124,23 @@ func verifyConfig() {
 
 func task() {
 	log.Info("Starting task")
-	ipAddress, err := getIPAddress()
-	// maybe wait and try again?
+	externalAddress, err := getIPAddress()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.WithFields(log.Fields{"ipAddress": ipAddress}).Info("Fetched external public IP")
-	currentIP, _ := fetchRecord()
-	// handle error, retries or return?
-	if currentIP.Content == ipAddress {
-		log.WithFields(log.Fields{"currentIP": currentIP.Content}).Info("IP address has not changed")
-		// nothing to do, return early
+	log.WithFields(log.Fields{"ipAddress": externalAddress}).Debug("Fetched external public IP")
+	currentRecord, err := fetchRecord()
+	if err != nil {
+		log.Fatal(err)
 	}
-	updateRecord(ipAddress)
-	// refactor ip address variable names to be more concise
+	if currentRecord.Content != externalAddress || os.Getenv("APP_ENV") != "production" {
+		updateRecord(currentRecord, externalAddress)
+	} else {
+		log.WithFields(log.Fields{"currentIP": currentRecord.Content}).Debug("IP address has not changed")
+		log.Debug("Nothing do to")
+	}
+	log.Info("Task completed")
 }
 
 func main() {
@@ -134,9 +162,10 @@ func main() {
 
 	task()
 
-	log.WithFields(log.Fields{"periodic": *periodicPtr}).Info("Periodic flag")
+	log.WithFields(log.Fields{"periodic": *periodicPtr}).Debug("Periodic flag")
 	if *periodicPtr {
-		gocron.Every(2).Hours().From(gocron.NextTick()).Do(task)
+		log.Info("Setting schedule")
+		gocron.Every(10).Minutes().From(gocron.NextTick()).Do(task)
 		<-gocron.Start()
 	}
 }
