@@ -20,7 +20,10 @@ func SignalStart() {
 	}
 	req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", os.Getenv("HC_URL"), "start"), nil)
 	req.Header.Set("Content-Type", "text/plain; charset=utf-8")
-	client.Do(req)
+	_, err := client.Do(req)
+	if err != nil {
+		log.WithFields(log.Fields{"err": err}).Warn("Error occurred while signalling Healthcheck start")
+	}
 }
 
 func SignalEnd() {
@@ -33,7 +36,10 @@ func SignalEnd() {
 	}
 	req, _ := http.NewRequest("GET", os.Getenv("HC_URL"), nil)
 	req.Header.Set("Content-Type", "text/plain; charset=utf-8")
-	client.Do(req)
+	_, err := client.Do(req)
+	if err != nil {
+		log.WithFields(log.Fields{"err": err}).Warn("Error occurred while signalling Healthcheck end")
+	}
 }
 
 func SignalFailure(errorMsg string) {
@@ -46,5 +52,8 @@ func SignalFailure(errorMsg string) {
 	}
 	req, _ := http.NewRequest("POST", fmt.Sprintf("%s/%s", os.Getenv("HC_URL"), "fail"), strings.NewReader(errorMsg))
 	req.Header.Set("Content-Type", "text/plain; charset=utf-8")
-	client.Do(req)
+	_, err := client.Do(req)
+	if err != nil {
+		log.WithFields(log.Fields{"err": err}).Warn("Error occurred while signalling Healthcheck failure")
+	}
 }

@@ -3,12 +3,13 @@ package main
 import (
 	"flag"
 	"os"
+	"time"
 
 	"github.com/gordonpn/cloudflare-ddns/internal/api"
 	"github.com/gordonpn/cloudflare-ddns/internal/config"
 	"github.com/gordonpn/cloudflare-ddns/internal/healthchecks"
 
-	"github.com/jasonlvhit/gocron"
+	"github.com/go-co-op/gocron"
 	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
 )
@@ -29,7 +30,11 @@ func task() {
 		log.Fatal(err)
 	}
 	if currentRecord.Content != externalAddress || os.Getenv("APP_ENV") != "production" {
-		api.UpdateRecord(currentRecord, externalAddress)
+		err := api.UpdateRecord(currentRecord, externalAddress)
+		if err != nil {
+			healthchecks.SignalFailure(err.Error())
+			log.Fatal(err)
+		}
 	} else {
 		log.WithFields(log.Fields{"currentIP": currentRecord.Content}).Debug("IP address has not changed")
 		log.Debug("Nothing do to")
@@ -60,7 +65,13 @@ func main() {
 	log.WithFields(log.Fields{"periodic": *periodicPtr}).Debug("Periodic flag")
 	if *periodicPtr {
 		log.Info("Setting schedule")
-		gocron.Every(10).Minutes().From(gocron.NextTick()).Do(task)
-		<-gocron.Start()
+		s := gocron.NewScheduler(time.UTC)
+
+		_, err := s.Every(10).Minutes().Do(task)
+		if err != nil {
+			healthchecks.SignalFailure(err.Error())
+			log.Fatal(err)
+		}
+		s.StartBlocking()
 	}
 }
