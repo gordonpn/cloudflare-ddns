@@ -29,6 +29,8 @@ func task() {
 		healthchecks.SignalFailure(err.Error())
 		log.Fatal(err)
 	}
+	log.WithFields(log.Fields{"ipAddress": currentRecord.Content}).Debug("Current record IP address")
+
 	if currentRecord.Content != externalAddress || os.Getenv("APP_ENV") != "production" {
 		err := api.UpdateRecord(currentRecord, externalAddress)
 		if err != nil {
@@ -36,7 +38,6 @@ func task() {
 			log.Fatal(err)
 		}
 	} else {
-		log.WithFields(log.Fields{"currentIP": currentRecord.Content}).Debug("IP address has not changed")
 		log.Debug("Nothing do to")
 	}
 	log.Info("Task completed")
