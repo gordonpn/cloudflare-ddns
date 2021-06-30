@@ -52,7 +52,6 @@ local docker_pipeline(branch, tag) = common {
         DOCKER_TOKEN: {
           from_secret: 'DOCKER_TOKEN',
         },
-        // DOCKER_BUILDKIT: 1,
       },
       volumes: [
         {

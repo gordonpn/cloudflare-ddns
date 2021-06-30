@@ -30,9 +30,9 @@ Run as a one-off Go script: `go run ./cmd/cloudflare-ddns/main.go`.
 
 ### Method 2
 
-Run the Docker container:
+Run the Docker container: `docker run ghcr.io/gordonpn/cloudflare-ddns:stable`
 
-TODO: add instruction
+Note that running with the container will require environment variables to be set in the shell.
 
 #### Flags
 

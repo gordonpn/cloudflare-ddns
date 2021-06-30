@@ -1,0 +1,8 @@
+.env
+.env.example
+.drone.jsonnet
+LICENSE
+Makefile
+README.md
+TODO.md
+.vscode
