@@ -1,0 +1,24 @@
+services:
+  ddns:
+    container_name: cloudflare-ddns
+    restart: unless-stopped
+    image: docker pull ghcr.io/gordonpn/cloudflare-ddns:stable
+    command: ["./main", "-periodic"]
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        order: start-first
+        failure_action: rollback
+        delay: 10s
+      rollback_config:
+        parallelism: 0
+        order: stop-first
+      restart_policy:
+        condition: any
+        delay: 60s
+        max_attempts: 5
+        window: 120s
+      placement:
+        constraints:
+          - node.labels.main-node == true
