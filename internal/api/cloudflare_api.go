@@ -70,6 +70,10 @@ func FetchRecord() (types.Record, error) {
 		log.Warn("More than one matching Record returned, ambiguous. Choosing first record.")
 	}
 
+	if len(apiResponse.Result) == 0 {
+		return types.Record{}, errors.New("No records returned from Cloudflare with the current config")
+	}
+
 	return apiResponse.Result[0], nil
 }
 
