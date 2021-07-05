@@ -65,7 +65,7 @@ local docker_pipeline(branch, tag) = common {
         'docker buildx rm builder || true',
         'docker buildx create --name builder --driver docker-container --use',
         'docker buildx inspect --bootstrap',
-        'docker buildx build -t ghcr.io/gordonpn/cloudflare-ddns:%s --platform linux/amd64,linux/arm64 --push .' % tag,
+        'docker buildx build -t ghcr.io/gordonpn/cloudflare-ddns:%s --platform linux/amd64,linux/arm64,linux/arm/v7 --push .' % tag,
       ],
     },
   ],

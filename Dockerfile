@@ -1,3 +1,5 @@
+FROM --platform=${BUILDPLATFORM} golang:1.16-alpine AS build
+
 LABEL maintainer="Gordon Pham-Nguyen <contact@gordon-pn.com>"
 LABEL org.opencontainers.image.authors="Gordon Pham-Nguyen <contact@gordon-pn.com>"
 LABEL org.opencontainers.image.title="cloudflare-ddns"
@@ -5,7 +7,6 @@ LABEL org.opencontainers.image.url="https://github.com/gordonpn/cloudflare-ddns"
 LABEL org.opencontainers.image.source="https://github.com/gordonpn/cloudflare-ddns"
 LABEL org.opencontainers.image.documentation="https://github.com/gordonpn/cloudflare-ddns"
 
-FROM --platform=${BUILDPLATFORM} golang:1.16-alpine AS build
 RUN apk update && \
     apk add --no-cache \
     ca-certificates \

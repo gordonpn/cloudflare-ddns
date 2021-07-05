@@ -11,7 +11,7 @@ sync: ## start sync unidirectionally with dev server
 
 .PHONY: build-docker
 build-docker: ## build docker image for arm64 and amd64
-	docker buildx build --platform linux/amd64,linux/arm64 .
+	docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 .
 
 .PHONY: run-docker
 run-docker: ## build docker image and run
