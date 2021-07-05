@@ -1,9 +1,16 @@
+version: "3.8"
 services:
   ddns:
     container_name: cloudflare-ddns
     restart: unless-stopped
-    image: docker pull ghcr.io/gordonpn/cloudflare-ddns:stable
+    image: ghcr.io/gordonpn/cloudflare-ddns:stable
     command: ["./main", "-periodic"]
+    environment:
+      - API_TOKEN
+      - ZONE_ID
+      - RECORD_NAME='gordon-pn.com'
+      - APP_ENV=production
+      - HC_URL
     deploy:
       replicas: 1
       update_config:

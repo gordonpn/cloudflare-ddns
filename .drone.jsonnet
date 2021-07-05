@@ -9,6 +9,9 @@ local common = {
   },
 };
 
+local volume_mount = { name: 'dockersock', host: { path: '/var/run/docker.sock' } };
+local volume_step_mount = { name: 'dockersock', path: '/var/run/docker.sock' };
+
 local lint_pipeline = common {
   name: 'lint',
   steps: [
@@ -37,6 +40,7 @@ local build_pipeline(arch) = common {
       ],
     },
   ],
+  depends_on: ['lint'],
 };
 
 local docker_pipeline(branch, tag) = common {
@@ -53,12 +57,7 @@ local docker_pipeline(branch, tag) = common {
           from_secret: 'DOCKER_TOKEN',
         },
       },
-      volumes: [
-        {
-          name: 'dockersock',
-          path: '/var/run/docker.sock',
-        },
-      ],
+      volumes: [volume_step_mount],
       commands: [
         'echo "$DOCKER_TOKEN" | docker login ghcr.io -u gordonpn --password-stdin',
         'docker run --rm --privileged multiarch/qemu-user-static --reset -p yes',
@@ -69,14 +68,40 @@ local docker_pipeline(branch, tag) = common {
       ],
     },
   ],
-  volumes: [
+  volumes: [volume_mount],
+  depends_on: ['build amd64', 'build arm64', 'build arm'],
+};
+
+local deploy_prod = common {
+  name: 'deploy prod',
+  trigger: {
+    branch: 'main',
+    event: 'push',
+  },
+  steps: [
     {
-      name: 'dockersock',
-      host: {
-        path: '/var/run/docker.sock',
+      name: 'deploy prod',
+      image: 'docker/compose:1.29.2',
+      environment: {
+        API_TOKEN: {
+          from_secret: 'API_TOKEN',
+        },
+        ZONE_ID: {
+          from_secret: 'ZONE_ID',
+        },
+        HC_URL: {
+          from_secret: 'HC_URL',
+        },
       },
+      volumes: [volume_step_mount],
+      commands: [
+        'docker-compose -f /drone/src/docker-compose.yml config > /drone/src/docker-compose.processed.yml',
+        'docker stack deploy -c /drone/src/docker-compose.processed.yml cloudflare-ddns',
+      ],
     },
   ],
+  volumes: [volume_mount],
+  depends_on: ['docker image main'],
 };
 
 [
@@ -87,4 +112,5 @@ local docker_pipeline(branch, tag) = common {
   docker_pipeline('main', 'stable'),
   docker_pipeline('develop', 'latest'),
   docker_pipeline('*', '${DRONE_COMMIT_SHA}'),
+  deploy_prod,
 ]
