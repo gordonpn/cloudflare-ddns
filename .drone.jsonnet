@@ -25,6 +25,19 @@ local lint_pipeline = common {
   ],
 };
 
+local test_pipeline = common {
+  name: 'test',
+  steps: [
+    {
+      name: 'test',
+      image: 'golang:1.16-buster',
+      commands: [
+        'go test -v ./...',
+      ],
+    },
+  ],
+};
+
 local build_pipeline(arch) = common {
   name: 'build %s' % arch,
   steps: [
@@ -40,7 +53,7 @@ local build_pipeline(arch) = common {
       ],
     },
   ],
-  depends_on: ['lint'],
+  depends_on: ['lint', 'test'],
 };
 
 local docker_pipeline(branch, tag) = common {
@@ -106,6 +119,7 @@ local deploy_prod = common {
 
 [
   lint_pipeline,
+  test_pipeline,
   build_pipeline('amd64'),
   build_pipeline('arm64'),
   build_pipeline('arm'),

@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -15,10 +16,19 @@ func checkCriticalConfig(key string) {
 	}
 }
 
+func cleanEnvVar(tempVar string) string {
+	tempVar = strings.ReplaceAll(tempVar, "\"", "")
+	tempVar = strings.ReplaceAll(tempVar, "'", "")
+	return tempVar
+}
+
 func VerifyConfig() {
-	checkCriticalConfig("API_TOKEN")
-	checkCriticalConfig("ZONE_ID")
-	checkCriticalConfig("RECORD_NAME")
+	criticalVars := []string{"API_TOKEN", "ZONE_ID", "RECORD_NAME"}
+	for _, key := range criticalVars {
+		checkCriticalConfig(key)
+		tempVar := os.Getenv(key)
+		os.Setenv(key, cleanEnvVar(tempVar))
+	}
 
 	if value, exists := os.LookupEnv("RECORD_TTL"); !exists {
 		log.Warn("Missing RECORD_TTL environment variable")
