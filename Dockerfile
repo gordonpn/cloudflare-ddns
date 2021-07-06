@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.2
 FROM --platform=${BUILDPLATFORM} golang:1.16-alpine AS build
 
 LABEL maintainer="Gordon Pham-Nguyen <contact@gordon-pn.com>"
@@ -31,7 +32,8 @@ ENV \
 COPY . .
 ARG TARGETOS
 ARG TARGETARCH
-RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -a -installsuffix cgo -o main ./cmd/cloudflare-ddns
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -a -o main ./cmd/cloudflare-ddns
 
 FROM golang:1.16-alpine
 COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
