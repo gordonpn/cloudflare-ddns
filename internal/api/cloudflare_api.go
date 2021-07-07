@@ -85,7 +85,7 @@ func UpdateRecord(record types.Record, externalAddress string) error {
 	}
 	url := fmt.Sprintf("https://api.cloudflare.com/client/v4/zones/%s/dns_records/%s", os.Getenv("ZONE_ID"), record.ID)
 	ttl, _ := strconv.Atoi(os.Getenv("RECORD_TTL"))
-	reqBody, _ := json.Marshal(types.UpdateRecordRequest{Type: "A", Name: "gordon-pn.com", Content: record.Content, TTL: ttl, Proxied: true})
+	reqBody, _ := json.Marshal(types.UpdateRecordRequest{Type: "A", Name: os.Getenv("RECORD_NAME"), Content: externalAddress, TTL: ttl, Proxied: true})
 	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		return err

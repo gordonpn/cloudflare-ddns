@@ -66,7 +66,7 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	config.VerifyConfig()
+	config.SanityCheck()
 
 	periodicPtr := flag.Bool("periodic", false, "Run periodically, automatically")
 

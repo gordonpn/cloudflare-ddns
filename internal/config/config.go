@@ -22,7 +22,7 @@ func cleanEnvVar(tempVar string) string {
 	return tempVar
 }
 
-func VerifyConfig() {
+func SanityCheck() {
 	criticalVars := []string{"API_TOKEN", "ZONE_ID", "RECORD_NAME"}
 	for _, key := range criticalVars {
 		checkCriticalConfig(key)
