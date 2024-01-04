@@ -1,7 +1,8 @@
 repo_name: gordonpn/cloudflare-ddns
 report_id: 2eb55a476a42f1bfefd61b34dd693208
+version: 0.1
 repo_type: Public
-timestamp: '2023-11-09T13:18:13+00:00'
+timestamp: '2024-01-04T14:54:02+00:00'
 requested_by: gordonpn
 provider: github
 branch: main
@@ -17,6 +18,7 @@ tools:
   category: Languages & Frameworks
   sub_category: Languages
   image_url: https://img.stackshare.io/service/1005/O6AczwfV_400x400.png
+  detection_source_url: https://github.com/gordonpn/cloudflare-ddns
   detection_source: Repo Metadata
 - name: Jsonnet
   description: A data templating language for app and tool developers
@@ -27,6 +29,7 @@ tools:
   category: Languages & Frameworks
   sub_category: Templating Languages & Extensions
   image_url: https://img.stackshare.io/service/10435/preview.jpeg
+  detection_source_url: https://github.com/gordonpn/cloudflare-ddns
   detection_source: Repo Metadata
 - name: Docker
   description: Enterprise Container Platform for High-Velocity Innovation.
@@ -37,6 +40,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Virtual Machine Platforms & Containers
   image_url: https://img.stackshare.io/service/586/n4u37v9t_400x400.png
+  detection_source_url: https://github.com/gordonpn/cloudflare-ddns
   detection_source: Repo Metadata
 - name: Git
   description: Fast, scalable, distributed revision control system
@@ -46,6 +50,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Version Control System
   image_url: https://img.stackshare.io/service/1046/git.png
+  detection_source_url: https://github.com/gordonpn/cloudflare-ddns
   detection_source: Repo Metadata
 - name: Shell
   description: A shell is a text-based terminal, used for manipulating programs and
@@ -56,4 +61,5 @@ tools:
   category: Languages & Frameworks
   sub_category: Languages
   image_url: https://img.stackshare.io/service/4631/default_c2062d40130562bdc836c13dbca02d318205a962.png
+  detection_source_url: https://github.com/gordonpn/cloudflare-ddns
   detection_source: Repo Metadata
